@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Charge pyramidale</title>
+<style>
+body { font-family: sans-serif; margin: 20px; line-height: 1.6; background-color: #f4f4f4; }
+.container { max-width: 900px; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 0 10px rgba(0,0,0,0.1); }
+h1 { color: #2c3e50; text-align: center; }
+.definition { background: #e8f4fd; padding: 15px; border-left: 5px solid #3498db; margin-bottom: 20px; }
+.form-group { margin-bottom: 15px; }
+label { display: block; font-weight: bold; margin-bottom: 5px; }
+input, select { width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; }
+button { background: #27ae60; color: white; padding: 10px 20px; border: none; border-radius: 4px; cursor: pointer; width: 100%; font-size: 1.1em; }
+button:hover { background: #219150; }
+table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+th, td { border: 1px solid #ddd; padding: 10px; text-align: center; }
+th { background-color: #34495e; color: white; }
+.hidden { display: none; }
+.result-section { margin-top: 30px; }
+</style>
+</head>
+<body>
+
+<div class="container">
+<h1>Charge pyramidale</h1>
+
+<div class="definition">
+<strong>Definition :</strong> La charge pyramidale est une methode d'entrainement ou l'on fait varier le poids souleve a chaque serie. On augmente la charge tout en diminuant les repetitions (montee), puis on peut redescendre (descente). Cela permet de travailler a la fois la force et le volume.
+</div>
+
+<div class="form-group">
+<label>Quelle est votre repetition maximale (1RM en kg) ?</label>
+<input type="number" id="maxRep" value="0" min="0">
+</div>
+
+<div class="form-group">
+<label>Utilisez vous une barre en fer (hors poulies) ?</label>
+<select id="useBarre" onchange="toggleBarreSection()">
+<option value="non">Non</option>
+<option value="oui">Oui</option>
+</select>
+</div>
+
+<div id="barreSection" class="hidden">
+<div class="form-group">
+<label>Quel est le poids de la barre utilisee ?</label>
+<select id="poidsBarre">
+<option value="2">2 kg</option>
+<option value="6">6 kg</option>
+<option value="8">8 kg</option>
+<option value="9">9 kg</option>
+<option value="11">11 kg</option>
+</select>
+</div>
+</div>
+
+<div class="form-group">
+<label>Quel programme d'entrainement suivez vous ?</label>
+<select id="programme">
+<option value="tonification">Tonification / Endurance</option>
+<option value="volume">Volume / Explosivite</option>
+<option value="force">Force</option>
+</select>
+</div>
+
+<button onclick="genererProgramme()">Calculer mon programme</button>
+
+<div id="resultat" class="result-section hidden">
+<h3>Votre tableau d'entrainement</h3>
+<table id="tableEntrainement">
+<thead>
+<tr>
+<th>Serie</th>
+<th>% Charge</th>
+<th>Nombre de Repetitions</th>
+<th>Charge Totale (kg)</th>
+<th>Disques par cote</th>
+<th>Recuperation</th>
+</tr>
+</thead>
+<tbody id="tableBody"></tbody>
+</table>
+</div>
+</div>
+
+<script>
+function toggleBarreSection() {
+    const useBarre = document.getElementById('useBarre').value;
+    document.getElementById('barreSection').className = (useBarre === 'oui') ? '' : 'hidden';
+}
+
+function calculerDisques(poidsTotal, poidsBarre) {
+    let poidsACalculer = (poidsTotal - poidsBarre) / 2;
+    if (poidsACalculer <= 0) return "Aucun";
+
+    const disquesDisponibles = [10, 5, 3, 2.5, 2, 1, 0.5];
+    let resultat = [];
+
+    for (let d of disquesDisponibles) {
+        let nb = Math.floor(poidsACalculer / d);
+        if (nb > 0) {
+            resultat.push(nb + "x" + d + "kg");
+            poidsACalculer = (poidsACalculer % d).toFixed(2);
+        }
+    }
+    return resultat.length > 0 ? resultat.join(", ") : "0";
+}
+
+function genererProgramme() {
+    const max = parseFloat(document.getElementById('maxRep').value);
+    const prog = document.getElementById('programme').value;
+    const useBarre = document.getElementById('useBarre').value;
+    const poidsBarre = useBarre === 'oui' ? parseFloat(document.getElementById('poidsBarre').value) : 0;
+
+    if (max <= 0) {
+        alert("Veuillez saisir une repetition maximale valide.");
+        return;
+    }
+
+    let config = {
+        pourcentages: [],
+        reps: [],
+        recup: ""
+    };
+
+    if (prog === "tonification") {
+        config.pourcentages = [0.50, 0.55, 0.60, 0.55, 0.50];
+        config.reps = ["Nombre le plus Ã©levÃ©", "inferieur a s1", "inferieur a s2", "identique a s2", "identique a s1"];
+        config.recup = "1 minute 30 secondes";
+    } else if (prog === "volume") {
+        config.pourcentages = [0.70, 0.75, 0.80, 0.75, 0.70];
+        config.reps = ["Nombre le plus Ã©levÃ©", "inferieur a la serie 1", "inferieur a la serie 2", "identique a la serie 2", "identique a la serie 1"];
+        config.recup = "1 minute 30 secondes";
+    } else {
+        config.pourcentages = [0.80, 0.85, 0.90, 0.85, 0.80];
+        config.reps = ["Nombre le plus Ã©levÃ©", "inferieur a la serie 1", "inferieur a serie 2", "identique a la serie 2", "identique a la serie 1"];
+        config.recup = "2 minutes a 2 minutes 30 secondes";
+    }
+
+    const tbody = document.getElementById('tableBody');
+    tbody.innerHTML = "";
+
+    config.pourcentages.forEach((p, index) => {
+        const chargeTotale = (max * p).toFixed(1);
+        const disques = useBarre === 'oui' ? calculerDisques(chargeTotale, poidsBarre) : "-";
+
+        let row = `<tr>
+            <td>serie ${index + 1}</td>
+            <td>${(p * 100).toFixed(0)}%</td>
+            <td>${config.reps[index]}</td>
+            <td>${chargeTotale} kg</td>
+            <td>${disques}</td>
+            ${index === 0 ? `<td rowspan="5">${config.recup}</td>` : ""}
+        </tr>`;
+        tbody.innerHTML += row;
+    });
+
+    document.getElementById('resultat').classList.remove('hidden');
+}
+</script>
+
+</body>
+</html>
